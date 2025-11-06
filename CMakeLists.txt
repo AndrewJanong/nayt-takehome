@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(log-monitor
     src/main.cpp
+    src/LogMonitor.cpp
 )
 
 target_include_directories(log-monitor PRIVATE src)
