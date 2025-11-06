@@ -47,7 +47,7 @@ void LogMonitor::processBuffer(const char* buffer, size_t bytes_read) {
             processLine(current_line_);
             current_line_.clear();
         } else {
-            if (current_line_.size() < 5000) {
+            if (current_line_.size() < config_.max_line_length) {
                 current_line_ += ch; // only add to current line if haven't exceeded line limit
             }
         }
@@ -55,7 +55,7 @@ void LogMonitor::processBuffer(const char* buffer, size_t bytes_read) {
 }
 
 void LogMonitor::waitForData() {
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(config_.poll_interval_ms));
 }
 
 void LogMonitor::run() {

@@ -10,6 +10,8 @@ public:
         std::string input_file;
         std::string output_file;
         size_t buffer_size = 8192; // 8KB
+        size_t max_line_length = 5000; // 5000 characters per line
+        int poll_interval_ms = 100; // poll every 100ms to check new data
     };
 
     explicit LogMonitor(const Config& config);
