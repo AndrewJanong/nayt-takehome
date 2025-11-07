@@ -9,8 +9,8 @@ def main():
     p.add_argument("--keywords", default="key1")
     p.add_argument("--p-key", type=float, default=0.5, help="probability a line contains a keyword")
     p.add_argument("--long-frac", type=float, default=0.0, help="fraction of lines that are long")
-    p.add_argument("--long-len", type=int, default=6000, help="length target for long lines")
-    p.add_argument("--base-len", type=int, default=120, help="length target for normal lines")
+    p.add_argument("--long-len", type=int, default=5000000, help="length target for long lines")
+    p.add_argument("--base-len", type=int, default=1000000, help="length target for normal lines")
     args = p.parse_args()
 
     keys = [k for k in args.keywords.split(",") if k]

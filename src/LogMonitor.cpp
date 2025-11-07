@@ -4,7 +4,9 @@
 
 LogMonitor::LogMonitor(const Config& config) 
     : config_(config) 
-    , running_(false) {}
+    , running_(false) {
+        current_line_.reserve(config.max_line_length);
+    }
 
 LogMonitor::~LogMonitor() {
     if (input_stream_.is_open()) input_stream_.close();
@@ -55,9 +57,9 @@ void LogMonitor::processLine(const std::string& line) {
     if (containsKeyword(line)) {
         if (config_.bench_stamp) {
             output_stream_ << line;
-            output_stream_ << "\t#MON_TS=" << std::to_string(now_epoch_ns()) << std::endl;
+            output_stream_ << "\t#MON_TS=" << std::to_string(now_epoch_ns()) << "\n";
         } else {
-            output_stream_ << line << std::endl;
+            output_stream_ << line << "\n";
         }
     }
 }

@@ -3,6 +3,7 @@ import os, subprocess, time, sys, argparse
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--monitor-cmd", default=os.environ.get("MONITOR_CMD", "./build/log-monitor a.log b.log key1"))
     ap.add_argument("--keywords", default="key1")
     ap.add_argument("--lines", type=int, default=2000)
     ap.add_argument("--long-len", type=int, default=6000)
@@ -17,7 +18,7 @@ def main():
 
     open("a.log", "a").close()
 
-    mon = subprocess.Popen(os.environ.get("MONITOR_CMD", "./build/log-monitor a.log b.log key1"), shell=True)
+    mon = subprocess.Popen(args.monitor_cmd, shell=True)
     time.sleep(0.3)
 
     subprocess.run(
