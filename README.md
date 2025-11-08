@@ -64,3 +64,32 @@ Stop with **Ctrl‑C** (SIGINT)
 - Right after reaching limit, lines are placed onto a bounded queue and a consumer thread performs keyword checks and writes accepted lines to the output file 
 
 > Rationale and trade‑offs are explained in detail in **DESIGN.md**.
+
+## Benchmarking
+
+Simple benchmarking scripts can be found in the `/benchmarks` directory. For simplicity we are using `a.log` as the log file our program is monitoring and `b.log` as the output.
+
+- `writer.py`: a script that write to the specified log file (the log file being monitored), taking paramaters such as number of lines, lines/sec, line length, etc.
+- `verify_output.py`: a script that will run the writer script and our program, then read the output log to check if lines exceed the limit or doesn't contain any keywords.
+- `bench_latency.py`: a script that will run the writer script and our program in `--bench-stamp` mode to know the end timestamp. 
+- `parse_latency.py`: this should be run after `bench_latency.py`, which will read the output logs and calculate latency statistics (p50, p90, p95, p99) in milliseconds.
+
+Simple benchmarking to try:
+
+- Checking correctness:
+
+```bash
+python3 benchmarks/verify_output.py --monitor-cmd "./build/log-monitor a.log b.log key1"
+```
+
+By default will write 1000 lines with keywords 'key1' with base line length 1000000 and longer lines will be 5000000, each having 0,5 probability. Program will monitor and write to the output, which then will be checked its correctness.
+
+- Latency testing:
+
+```bash
+python3 benchmarks/bench_latency.py --lines 10000 --rps 1000 --monitor-cmd "./build/log-monitor a.log b.log --bench-stamp key1"
+
+python3 benchmarks/parse_latency.py --path b.out
+```
+
+Writer will write 10000 lines with 1000 lines/s each of length 1000000. Program will monitor and write to output, which the second command will parse the output to get latency stats.
