@@ -17,7 +17,8 @@ def main():
         for line in f:
             ts = parse_ts_ns(line)
             mon_ts = parse_mon_ts_ns(line)
-            latency_ms.append((mon_ts - ts) / 1e6)
+            if ts and mon_ts:
+                latency_ms.append((mon_ts - ts) / 1e6)
 
     if not latency_ms:
         print("No process-stamped lines found")

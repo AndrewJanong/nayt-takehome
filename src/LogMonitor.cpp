@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <cerrno>
+#include <cstring>
 
 LogMonitor::LogMonitor(const Config& config) 
     : config_(config) {
@@ -30,14 +31,13 @@ LogMonitor::~LogMonitor() {
 bool LogMonitor::openFiles() {
     input_fd_ = ::open(config_.input_file.c_str(), O_RDONLY);
     if (input_fd_ < 0) {
-        std::cerr << "Error: Cannot open input file: " << config_.input_file
-                  << " (" << std::strerror(errno) << ")\n";
+        std::cerr << "Error: Cannot open input file\n";
         return false;
     }
 
     // only track updates to the log file, seek to end
     if (::lseek(input_fd_, 0, SEEK_END) == (off_t)-1) {
-        std::cerr << "Error: lseek on input file failed: " << std::strerror(errno) << "\n";
+        std::cerr << "Error: lseek on input file failed\n";
         ::close(input_fd_);
         input_fd_ = -1;
         return false;
@@ -86,26 +86,42 @@ void LogMonitor::processLine(const std::string& line) {
 }
 
 void LogMonitor::processBuffer(const char* buffer, size_t bytes_read) {
-    for (size_t i = 0; i < bytes_read; i++) {
-        char ch = buffer[i];
+    const char* read_cursor = buffer;
+    const char* buffer_end = buffer + bytes_read;
 
-        if (ch == '\r') {
-            continue;
-        } else if (ch == '\n') {
-            if (current_line_.size() < config_.max_line_length) processLine(current_line_);
-            current_line_.clear();
-        } else {
+    while (read_cursor < buffer_end) {
+        // find next newline
+        const char* newline = static_cast<const char*>(
+            std::memchr(read_cursor, '\n', static_cast<size_t>(buffer_end - read_cursor))
+        );
+        const char* segment_end = newline ? newline : buffer_end;
+
+        for (const char* q = read_cursor; q < segment_end; ++q) {
+            char ch = *q;
+            if (ch == '\r') continue;
+
             if (current_line_.size() < config_.max_line_length) {
                 current_line_ += ch;
 
-                // if reaches limit, enqueue first to be filtered
+                // if reaches limit, enqueue first to be filtered (same behavior as before)
                 if (current_line_.size() == config_.max_line_length) {
                     processLine(current_line_);
                 }
             }
         }
+
+        if (newline) {
+            if (current_line_.size() < config_.max_line_length) {
+                processLine(current_line_);
+            }
+            current_line_.clear();
+            read_cursor = newline + 1; // continue after '\n'
+        } else {
+            read_cursor = buffer_end;
+        }
     }
 }
+
 
 void LogMonitor::waitForData() {
     std::this_thread::sleep_for(std::chrono::milliseconds(config_.poll_interval_ms));
@@ -162,7 +178,7 @@ void LogMonitor::run() {
             if (errno == EINTR) {
                 continue; // interrupted by signal, retry
             }
-            std::cerr << "read() error: " << std::strerror(errno) << "\n";
+            std::cerr << "read() error\n";
             waitForData();
         }
     }
