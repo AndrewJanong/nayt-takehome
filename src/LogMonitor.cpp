@@ -94,6 +94,13 @@ void LogMonitor::processBuffer(const char* buffer, size_t bytes_read) {
         const char* newline = static_cast<const char*>(
             std::memchr(read_cursor, '\n', static_cast<size_t>(buffer_end - read_cursor))
         );
+
+        // if limit is reached and current batch doesn't contain next line, skip 
+        if (skip_line_ && !newline) {
+            read_cursor = buffer_end;
+            break;
+        }
+
         const char* segment_end = newline ? newline : buffer_end;
 
         for (const char* q = read_cursor; q < segment_end; ++q) {
@@ -106,6 +113,8 @@ void LogMonitor::processBuffer(const char* buffer, size_t bytes_read) {
                 // if reaches limit, enqueue first to be filtered (same behavior as before)
                 if (current_line_.size() == config_.max_line_length) {
                     processLine(current_line_);
+                    skip_line_ = true;
+                    break;
                 }
             }
         }
@@ -116,6 +125,7 @@ void LogMonitor::processBuffer(const char* buffer, size_t bytes_read) {
             }
             current_line_.clear();
             read_cursor = newline + 1; // continue after '\n'
+            skip_line_ = false;
         } else {
             read_cursor = buffer_end;
         }

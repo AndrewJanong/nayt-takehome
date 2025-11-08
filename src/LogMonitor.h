@@ -46,6 +46,8 @@ private:
     std::condition_variable queue_cv_;
     std::deque<std::string> line_queue_;
 
+    bool skip_line_ = false;
+
     bool openFiles();
     void processBuffer(const char* buffer, size_t bytes_read);
     void processLine(const std::string& line);
