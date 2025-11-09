@@ -106,6 +106,10 @@ void LogMonitor::processBuffer(const char* buffer, size_t bytes_read) {
         if (skip_line_ && !newline) {
             read_cursor = buffer_end;
             break;
+        } else if (skip_line_ && newline) {
+            read_cursor = newline + 1;
+            skip_line_ = false;
+            continue;
         }
 
         const char* segment_end = newline ? newline : buffer_end;
@@ -130,7 +134,6 @@ void LogMonitor::processBuffer(const char* buffer, size_t bytes_read) {
             if (current_line_.size() < config_.max_line_length) {
                 emitLine(current_line_);
             }
-            current_line_.clear();
             read_cursor = newline + 1; // continue after '\n'
             skip_line_ = false;
         } else {
