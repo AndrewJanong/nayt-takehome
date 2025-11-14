@@ -21,6 +21,9 @@ public:
         std::vector<std::string> keywords;
         bool bench_stamp = false;
         size_t queue_capacity = 4096; // bound for line queue
+
+        int reader_cpu   = -1; // default -1 = no pinning
+        int consumer_cpu = -1; // default -1 = no pinning
     };
 
     explicit LogMonitor(const Config& config);
@@ -54,6 +57,8 @@ private:
     bool containsKeyword(const std::string& line) const;
     void waitForData();
     void consumerLoop();
+
+    static void pinThread(int cpu);
 };
 
 #endif // LOG_MONITOR_H

@@ -17,15 +17,25 @@ int main(int argc, char** argv) {
     LogMonitor::Config cfg;
     cfg.input_file = argv[1];
     cfg.output_file = argv[2];
-    if (argc > 3) {
-        std::string arg = argv[3];
+
+    for (int i = 3; i < argc; ++i) {
+        std::string arg = argv[i];
+
         if (arg == "--bench-stamp") {
             cfg.bench_stamp = true;
-            cfg.keywords.assign(argv + 4, argv + argc);
-        } else {
-            cfg.keywords.assign(argv + 3, argv + argc);
+            continue;
         }
-    }   
+        if (arg.rfind("--pin-reader=", 0) == 0) {
+            cfg.reader_cpu = std::atoi(arg.c_str() + 13);
+            continue;
+        }
+        if (arg.rfind("--pin-consumer=", 0) == 0) {
+            cfg.consumer_cpu = std::atoi(arg.c_str() + 15);
+            continue;
+        }
+
+        cfg.keywords.push_back(std::move(arg));
+    }
 
     LogMonitor monitor(cfg);
     g_monitor = &monitor;

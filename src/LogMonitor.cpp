@@ -7,6 +7,11 @@
 #include <cerrno>
 #include <cstring>
 
+#ifdef __linux__
+  #include <pthread.h>
+  #include <sched.h>
+#endif
+
 LogMonitor::LogMonitor(const Config& config) 
     : config_(config) {
     current_line_.reserve(config.max_line_length);
@@ -26,6 +31,20 @@ LogMonitor::~LogMonitor() {
         output_stream_.flush();
         output_stream_.close();
     }
+}
+
+void LogMonitor::pinThread(int cpu) {
+#ifdef __linux__
+    if (cpu < 0) return;
+    cpu_set_t set;
+    CPU_ZERO(&set);
+    CPU_SET(static_cast<unsigned>(cpu), &set);
+
+    // Ignore errors to keep behavior identical if pin fails.
+    pthread_setaffinity_np(pthread_self(), sizeof(set), &set);
+#else
+    (void) cpu;
+#endif
 }
 
 bool LogMonitor::openFiles() {
@@ -181,9 +200,16 @@ void LogMonitor::run() {
         return;
     }
 
+    // pin reader thread if configured
+    if (config_.reader_cpu >= 0) pinThread(config_.reader_cpu);
+
     running_ = true;
 
-    consumer_thread_ = std::thread(&LogMonitor::consumerLoop, this);
+    // create and pin consumer thread if configured
+    consumer_thread_ = std::thread([this] {
+        if (config_.consumer_cpu >= 0) pinThread(config_.consumer_cpu);
+        consumerLoop();
+    });
 
     std::vector<char> buffer(config_.buffer_size);
 
