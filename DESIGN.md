@@ -15,7 +15,7 @@ A bounded `deque<std::string>` bridges the stages, guarded by a mutex and condit
 
 - **POSIX read loop**: The reader uses `open`/`read` and seeks the input to end at startup, reading only newly appended data.
 - **Chunked reads**: Data is read into a reusable buffer of configurable size (`buffer_size`, default 1 MiB). Reading in chunks was decided to minimize syscalls while keeping latency low for line assembly.
-- **Polling**: If no new data is available, the reader will sleep for a short interval (`poll_interval_ms`, default 1 ms). This avoids busy‑spinning, but still responsive. More advanced methods (e.g., `inotify`) were avoided to keep the solution portable and simple to deploy.
+- **Evented wakes**: If no new data is available, the reader will sleep and will be notified if there is an update by using `inotify`. This avoids unecessary waits for data.
 
 # Line Assembly & Truncation
 
@@ -26,7 +26,7 @@ A bounded `deque<std::string>` bridges the stages, guarded by a mutex and condit
 
 # Filtering
 
-- **Substring match**: The consumer applies a simple substring search using `find()` against a configurable list of keywords. If the list is empty, all lines are accepted. This is deterministic, fast for moderate keyword counts, and avoids large dependencies.
+- **Substring match**: If the number of keywords is small (< 4), then consumer simple applies a simple substring search using `find()`. Otherwise, use Aho-Corasick algorithm to do string matching across many keywords efficiently.
 
 # Concurrency & Backpressure
 

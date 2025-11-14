@@ -32,6 +32,8 @@ log-monitor <input_log> <output_log> [--bench-stamp] [keyword1 keyword2 ...]
 - `<input_log>`: path to the file to monitor (existing file)
 - `<output_log>`: path to the output file (will be created/appended)
 - `--bench-stamp`: if present, appends `\t#MON_TS=<epoch_ns>` to each emitted line to help latency benchmarking
+- `--pin-reader=<cpu>`: pins reader thread to the logical CPU
+- `--pin-consumer=<cpu>`: pins reader thread to the logical CPU
 - `keyword...`: zero or more keywords. If no keywords are provided, all lines are emitted
 
 ### Examples
